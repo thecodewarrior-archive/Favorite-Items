@@ -47,14 +47,6 @@ public class Transformer implements IClassTransformer {
         ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES | ClassWriter.COMPUTE_MAXS);
 
         cr.accept(cn, 0);
-
-        if("net.minecraft.inventory.Slot".equals(transformedName)) {
-            FavoriteMod.l.info("transforming Slot");
-        	transformSlot(cn);
-
-            cn.accept(cw);
-            return cw.toByteArray();
-        }
         
         if("net.minecraft.client.gui.inventory.GuiContainer".equals(transformedName)) {
             FavoriteMod.l.info("transforming GuiContainer");
@@ -64,17 +56,17 @@ public class Transformer implements IClassTransformer {
             return cw.toByteArray();
         }
         
-        if("net.minecraft.inventory.Container".equals(transformedName)) {
-            FavoriteMod.l.info("transforming Container");
-            transformContainer(cn);
+        if("net.minecraft.client.multiplayer.PlayerControllerMP".equals(transformedName)) {
+            FavoriteMod.l.info("transforming PlayerControllerMP");
+            transformPlayerControllerMP(cn);
 
             cn.accept(cw);
             return cw.toByteArray();
         }
         
-        if("net.minecraft.client.multiplayer.PlayerControllerMP".equals(transformedName)) {
-            FavoriteMod.l.info("transforming PlayerControllerMP");
-            transformPlayerControllerMP(cn);
+        if("net.minecraft.client.entity.EntityClientPlayerMP".equals(transformedName)) {
+            FavoriteMod.l.info("transforming EntityClientPlayerMP");
+            transformEntityClientPlayerMP(cn);
 
             cn.accept(cw);
             return cw.toByteArray();
@@ -121,30 +113,6 @@ public class Transformer implements IClassTransformer {
     	return true;
     }
     
-    public void transformSlot(ClassNode clazz) {
-		String playerClass = FMLDeobfuscatingRemapper.INSTANCE.map("net/minecraft/entity/player/EntityPlayer");
-		String slotClass   = FMLDeobfuscatingRemapper.INSTANCE.map("net/minecraft/inventory/Slot");
-    	
-    	for (MethodNode method : clazz.methods)
-        {
-    		String unmappedName = FMLDeobfuscatingRemapper.INSTANCE.mapMethodName(clazz.name, method.name, method.desc);
-            String unmappedDesc = FMLDeobfuscatingRemapper.INSTANCE.mapMethodDesc(method.desc);
-
-            if(isMethod(method,
-            		new String[]{"canTakeStack", "func_82869_a", "a"},
-            		new String[]{"(Lnet/minecraft/entity/player/EntityPlayer;)Z", "(Lyz;)Z"}
-            )) {
-                FavoriteMod.l.info("	transforming canTakeStack (actually " + method.name + method.desc + ")");
-            	InsnList list = new InsnList();
-            	list.add(new VarInsnNode(Opcodes.ALOAD, 0));
-            	list.add(new VarInsnNode(Opcodes.ALOAD, 1));
-            	list.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "thecodewarrior/favorite/ASMHooks", "canRemove", "(L"+slotClass+";L"+playerClass+";)Z", false));
-            	list.add(new InsnNode(Opcodes.IRETURN));
-            	method.instructions.insertBefore(method.instructions.getFirst(), list);
-            }
-        }
-    }
-    
     public void transformGuiContainer(ClassNode clazz) {
     	String guiContainer = mType("net/minecraft/client/gui/inventory/GuiContainer");
     	String slot = mType("net/minecraft/inventory/Slot");
@@ -159,7 +127,7 @@ public class Transformer implements IClassTransformer {
             		new String[]{"keyTyped", "func_73869_a", "a"},
             		new String[]{"(CI)V"}
             )) {
-                FavoriteMod.l.info("		transforming keyTyped (actually " + method.name + method.desc + ")");
+                FavoriteMod.l.info("	transforming keyTyped (actually " + method.name + method.desc + ")");
             	InsnList list = new InsnList();
             	list.add(new VarInsnNode(Opcodes.ALOAD, 0));
             	list.add(new VarInsnNode(Opcodes.ALOAD, 0));
@@ -177,7 +145,7 @@ public class Transformer implements IClassTransformer {
             		new String[]{"handleMouseClick", "a"},
             		new String[]{"(Lnet/minecraft/inventory/Slot;III)V", "(Laay;III)V"}
             )) {
-                FavoriteMod.l.info("		transforming handleMouseClick (actually " + method.name + method.desc + ")");
+                FavoriteMod.l.info("	transforming handleMouseClick (actually " + method.name + method.desc + ")");
             	InsnList list = new InsnList();
             	list.add(new VarInsnNode(Opcodes.ILOAD, 4));
             	list.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "thecodewarrior/favorite/ASMHooks", "actionOffset","()I", false));
@@ -188,47 +156,46 @@ public class Transformer implements IClassTransformer {
         }
     }
     
-    public void transformContainer(ClassNode clazz) {
+    public void transformEntityClientPlayerMP(ClassNode clazz) {
+    	String playerMP = mType("net/minecraft/client/entity/EntityClientPlayerMP");
+
     	for (MethodNode method : clazz.methods)
         {
-    		String unmappedName = FMLDeobfuscatingRemapper.INSTANCE.mapMethodName(clazz.name, method.name, method.desc);
-            String unmappedDesc = FMLDeobfuscatingRemapper.INSTANCE.mapMethodDesc(method.desc);
-            boolean obf = false;
             if(isMethod(method,
-            		new String[]{"slotClick", "func_75144_a", "a"},
-            		new String[]{"(IIILnet/minecraft/entity/player/EntityPlayer;)Lnet/minecraft/item/ItemStack;","(IIILyz;)Ladd;"}
+            		new String[]{"dropOneItem", "func_71040_bB", "a"},
+            		new String[]{"(Z)Lnet/minecraft/entity/item/EntityItem;", "(Z)Lxk;"}
             )) {
-            	if(method.name.equals("a")) {
-            		obf = true;
-            	}
-                FavoriteMod.l.info("	transforming slotClick (actually " + method.name + method.desc + ")");
-                AbstractInsnNode line1 = null;
-                AbstractInsnNode line2 = null;
-            	for (int i = 0; i < method.instructions.size(); i++) {
-					AbstractInsnNode insn = method.instructions.get(i);
-					
-					if(insn instanceof LineNumberNode && ((LineNumberNode)insn).line == ( obf ? 209 : 305)) {
-						line1 = insn;
-						FavoriteMod.l.info("		found overrideTrue=true insertion point");
-					}
-					if(insn instanceof LineNumberNode && ((LineNumberNode)insn).line == ( obf ? 277 : 399)) {
-						line2 = insn;
-						FavoriteMod.l.info("		found overrideTrue=false insertion point");
-					}
-				}
-            	InsnList list1 = new InsnList();
-            	InsnList list2 = new InsnList();
+                FavoriteMod.l.info("	transforming dropOneItem (actually " + method.name + method.desc + ")");
+            	InsnList list = new InsnList();
+            	LabelNode label = new LabelNode();	
             	
-            	list1.add(new InsnNode(Opcodes.ICONST_1));
-            	list1.add(new FieldInsnNode(Opcodes.PUTSTATIC, "thecodewarrior/favorite/ASMHooks", "overrideTrue", "Z"));
+            	list.add(new VarInsnNode(Opcodes.ALOAD, 0));
+            	list.add(new VarInsnNode(Opcodes.ILOAD, 1));
+            	list.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "thecodewarrior/favorite/ASMHooks", "shouldAbortThrowOutsideGui","(L"+ playerMP +";Z)Z", false));
             	
-            	list2.add(new InsnNode(Opcodes.ICONST_0));
-            	list2.add(new FieldInsnNode(Opcodes.PUTSTATIC, "thecodewarrior/favorite/ASMHooks", "overrideTrue", "Z"));
+            	list.add(new InsnNode(Opcodes.ICONST_0));
+            	list.add(new JumpInsnNode(Opcodes.IF_ICMPEQ, label));
             	
-            	if(line1 != null && line2 != null) {
-            		method.instructions.insertBefore(line1, list1);
-            		method.instructions.insertBefore(line2, list2);
-            	}
+	            	list.add(new InsnNode(Opcodes.ACONST_NULL));
+	            	list.add(new InsnNode(Opcodes.ARETURN));
+	            	
+            	list.add(label);
+	        	
+            	method.instructions.insertBefore(method.instructions.getFirst(), list);
+            }
+            
+            if(isMethod(method,
+            		new String[]{"closeScreen", "func_71053_j", "k"},
+            		new String[]{"()V"}
+            )) {
+                FavoriteMod.l.info("	transforming closeScreen (actually " + method.name + method.desc + ")");
+            	InsnList list = new InsnList();
+            	LabelNode label = new LabelNode();	
+            	
+            	list.add(new VarInsnNode(Opcodes.ALOAD, 0));
+            	list.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "thecodewarrior/favorite/ASMHooks", "guiPreClose","(L"+ playerMP +";)V", false));
+	        	
+            	method.instructions.insertBefore(method.instructions.getFirst(), list);
             }
         }
     }
@@ -237,6 +204,7 @@ public class Transformer implements IClassTransformer {
     	String guiContainer = mType("net/minecraft/client/gui/inventory/GuiContainer");
     	String slot = mType("net/minecraft/inventory/Slot");
     	String player = mType("net/minecraft/entity/player/EntityPlayer");
+    	String playerMP = mType("net/minecraft/client/entity/EntityClientPlayerMP");
     	String stack = mType("net/minecraft/item/ItemStack");
 
     	for (MethodNode method : clazz.methods)
@@ -283,6 +251,29 @@ public class Transformer implements IClassTransformer {
 	        		list.add(new VarInsnNode(Opcodes.ISTORE, 4));
         		
 	        	list.add(label2);
+	        	
+            	method.instructions.insertBefore(method.instructions.getFirst(), list);
+            }
+            
+            if(isMethod(method,
+            		new String[]{"dropOneItem", "func_71040_bB", "a"},
+            		new String[]{"(Z)Lnet/minecraft/entity/item/EntityItem;", "(Z)Lxk;"}
+            )) {
+                FavoriteMod.l.info("	transforming dropOneItem (actually " + method.name + method.desc + ")");
+            	InsnList list = new InsnList();
+            	LabelNode label = new LabelNode();
+            	
+            	list.add(new VarInsnNode(Opcodes.ALOAD, 0));
+            	list.add(new VarInsnNode(Opcodes.ILOAD, 1));
+            	list.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "thecodewarrior/favorite/ASMHooks", "shouldAbortThrowOutsideGui","(L"+ playerMP +";Z)Z", false));
+            	
+            	list.add(new InsnNode(Opcodes.ICONST_0));
+            	list.add(new JumpInsnNode(Opcodes.IF_ICMPEQ, label));
+            	
+	            	list.add(new InsnNode(Opcodes.ACONST_NULL));
+	            	list.add(new InsnNode(Opcodes.ARETURN));
+	            	
+            	list.add(label);
 	        	
             	method.instructions.insertBefore(method.instructions.getFirst(), list);
             }

@@ -6,6 +6,7 @@ import net.minecraftforge.common.config.Configuration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import cpw.mods.fml.common.FMLCommonHandler;
 import cpw.mods.fml.common.Mod;
 import cpw.mods.fml.common.Mod.EventHandler;
 import cpw.mods.fml.common.SidedProxy;
@@ -24,14 +25,14 @@ public class FavoriteMod {
 	@SidedProxy(serverSide="thecodewarrior.favorite.CommonProxy", clientSide="thecodewarrior.favorite.ClientProxy")
 	public static CommonProxy proxy;
 	
-	public static SimpleNetworkWrapper network;
-	
 	@EventHandler
     public void preInit(FMLPreInitializationEvent event) {
-		network = NetworkRegistry.INSTANCE.newSimpleChannel("FavoriteChannel");
-	    network.registerMessage(MessageSetFavorite.Handler.class, MessageSetFavorite.class, 0, Side.SERVER);
 	    MinecraftForge.EVENT_BUS.register(proxy);
 	    proxy.init();
+	    
+	    if(FMLCommonHandler.instance().getEffectiveSide() == Side.SERVER) {
+	    	throw new RuntimeException("FavoriteMod can't be run on the server!");
+	    }
 	    
         Configuration config = new Configuration(event.getSuggestedConfigurationFile());
         config.load();

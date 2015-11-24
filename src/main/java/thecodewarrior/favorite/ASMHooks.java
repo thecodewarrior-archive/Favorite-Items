@@ -1,11 +1,14 @@
 package thecodewarrior.favorite;
 
+import java.util.List;
+
+import net.minecraft.client.entity.EntityClientPlayerMP;
 import net.minecraft.client.gui.inventory.GuiContainer;
 import net.minecraft.client.renderer.entity.RenderItem;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.inventory.Container;
 import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NBTTagCompound;
 
 public class ASMHooks {
 	public static boolean overrideTrue = false;
@@ -17,22 +20,6 @@ public class ASMHooks {
 	
 	public static boolean isFavorite(ItemStack stack) {
 		return FavoriteMod.proxy.isFavorite(stack);
-	}
-	
-	public static boolean canRemove(Slot slot, EntityPlayer player) {
-//		if(overrideTrue && !completeLock)
-//			return true;
-//		
-//		if(slot != null && slot.getStack() != null) {
-//			ItemStack stack = slot.getStack();
-//			if(stack.getTagCompound() != null) {
-//				if(stack.getTagCompound().getBoolean("favorite")) {
-//					return false;
-//				}
-//			}
-//		}
-		
-		return true;
 	}
 	
 	public static void inventoryKeyPress(GuiContainer container, Slot slot, char pressed, int keyCode) {
@@ -50,8 +37,27 @@ public class ASMHooks {
 		return 100;
 	}
 	
+	public static boolean shouldAbortThrowOutsideGui(EntityClientPlayerMP player, boolean isCtrlKeyPressed) {
+		if(isFavorite(player.getHeldItem())) {
+			return true;
+		}
+		return false;
+	}
+	
+	public static void guiPreClose(EntityClientPlayerMP player) {
+		Container c = player.openContainer;
+		ItemStack held = player.inventory.getItemStack();
+		if(held != null) {
+			for(Slot s : (List<Slot>)c.inventorySlots) {
+				if(s.inventory == player.inventory && s.getStack() == null) {
+					((ClientProxy)FavoriteMod.proxy).getPlayerController().windowClick(c.windowId, s.slotNumber, 0, 100, player);
+				}
+			}
+		}
+	}
+	
 	public static boolean shouldAbortClick(int windowId, int slotId, int data, int action, EntityPlayer player) {
-		if(slotId == -999) {
+		if(slotId < 0) {
 			if(isFavorite(player.inventory.getItemStack())) {
 				return true;
 			}
