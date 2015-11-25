@@ -17,6 +17,9 @@ public class ASMHooks {
 	public static void drawFavoriteUnderlay(RenderItem renderItem, ItemStack stack, int x, int y) {
 		((ClientProxy)FavoriteMod.proxy).drawFavoriteUnderlay(renderItem, stack, x, y);
 	}
+	public static void drawFavoriteOverlay(RenderItem renderItem, ItemStack stack, int x, int y) {
+		((ClientProxy)FavoriteMod.proxy).drawFavoriteOverlay(renderItem, stack, x, y);
+	}
 	
 	public static boolean isFavorite(ItemStack stack) {
 		return FavoriteMod.proxy.isFavorite(stack);

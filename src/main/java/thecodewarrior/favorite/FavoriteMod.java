@@ -19,7 +19,7 @@ import cpw.mods.fml.relauncher.Side;
 public class FavoriteMod {
 	public static final String MODID = "favorites";
 	public static final String MODNAME = "Favorites!";
-	public static final String VERSION = "0.0.0";
+	public static final String VERSION = "1.0";
 	public static final Logger l = LogManager.getLogger("Favorites");
 	
 	@SidedProxy(serverSide="thecodewarrior.favorite.CommonProxy", clientSide="thecodewarrior.favorite.ClientProxy")
@@ -31,7 +31,10 @@ public class FavoriteMod {
 	    proxy.init();
 	    
 	    if(FMLCommonHandler.instance().getEffectiveSide() == Side.SERVER) {
-	    	throw new RuntimeException("FavoriteMod can't be run on the server!");
+	    	FavoriteMod.l.error("=================================================================");
+	    	FavoriteMod.l.error("         !!! FavoriteItems is a client side only mod !!!         ");
+	    	FavoriteMod.l.error("=================================================================");
+	    	throw new RuntimeException("FavoriteItems can't be run on a server!");
 	    }
 	    
         Configuration config = new Configuration(event.getSuggestedConfigurationFile());

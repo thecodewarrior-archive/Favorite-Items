@@ -108,6 +108,15 @@ public class Transformer implements IClassTransformer {
             	list.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "thecodewarrior/favorite/ASMHooks", "drawFavoriteUnderlay", "(L"+renderItem+";L" + stack + ";II)V", false));
 
             	method.instructions.insertBefore(method.instructions.getFirst(), list);
+            	
+            	list = new InsnList();
+            	
+            	list.add(new VarInsnNode(Opcodes.ALOAD, 0)); // this
+            	list.add(new VarInsnNode(Opcodes.ALOAD, 3)); // stack
+            	list.add(new VarInsnNode(Opcodes.ILOAD, 4)); // x
+            	list.add(new VarInsnNode(Opcodes.ILOAD, 5)); // y
+            	list.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "thecodewarrior/favorite/ASMHooks", "drawFavoriteOverlay", "(L"+renderItem+";L" + stack + ";II)V", false));
+            	method.instructions.insertBefore(method.instructions.getLast().getPrevious(), list);
             }
         }
     	return true;
