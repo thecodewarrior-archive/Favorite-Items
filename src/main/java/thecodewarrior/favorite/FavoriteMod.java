@@ -31,9 +31,9 @@ public class FavoriteMod {
 	    proxy.init();
 	    
 	    if(FMLCommonHandler.instance().getEffectiveSide() == Side.SERVER) {
-	    	FavoriteMod.l.error("=================================================================");
-	    	FavoriteMod.l.error("         !!! FavoriteItems is a client side only mod !!!         ");
-	    	FavoriteMod.l.error("=================================================================");
+	    	FavoriteMod.l.error("#===============================================================#");
+	    	FavoriteMod.l.error("#        !!! FavoriteItems is a client side only mod !!!        #");
+	    	FavoriteMod.l.error("#===============================================================#");
 	    	throw new RuntimeException("FavoriteItems can't be run on a server!");
 	    }
 	    
