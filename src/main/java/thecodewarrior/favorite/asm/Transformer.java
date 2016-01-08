@@ -87,6 +87,7 @@ public class Transformer implements IClassTransformer {
     public boolean transformRenderItem(ClassNode clazz) {
     	String stack = mType("net/minecraft/item/ItemStack");
     	String renderItem = mType("net/minecraft/client/renderer/entity/RenderItem");
+    	String texMan = mType("net/minecraft/client/renderer/texture/TextureManager");
     	for (MethodNode method : clazz.methods)
         {
             boolean obf = false;
@@ -102,21 +103,41 @@ public class Transformer implements IClassTransformer {
                 InsnList list = new InsnList();
             	
             	list.add(new VarInsnNode(Opcodes.ALOAD, 0)); // this
+            	list.add(new VarInsnNode(Opcodes.ALOAD, 2)); // texture manager
             	list.add(new VarInsnNode(Opcodes.ALOAD, 3)); // stack
             	list.add(new VarInsnNode(Opcodes.ILOAD, 4)); // x
             	list.add(new VarInsnNode(Opcodes.ILOAD, 5)); // y
-            	list.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "thecodewarrior/favorite/ASMHooks", "drawFavoriteUnderlay", "(L"+renderItem+";L" + stack + ";II)V", false));
+            	list.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "thecodewarrior/favorite/ASMHooks", "drawFavoriteUnderlay", "(L"+renderItem+";L"+texMan+";L" + stack + ";II)V", false));
 
             	method.instructions.insertBefore(method.instructions.getFirst(), list);
             	
             	list = new InsnList();
             	
             	list.add(new VarInsnNode(Opcodes.ALOAD, 0)); // this
+            	list.add(new VarInsnNode(Opcodes.ALOAD, 2)); // texture manager
             	list.add(new VarInsnNode(Opcodes.ALOAD, 3)); // stack
             	list.add(new VarInsnNode(Opcodes.ILOAD, 4)); // x
             	list.add(new VarInsnNode(Opcodes.ILOAD, 5)); // y
-            	list.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "thecodewarrior/favorite/ASMHooks", "drawFavoriteOverlay", "(L"+renderItem+";L" + stack + ";II)V", false));
+            	list.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "thecodewarrior/favorite/ASMHooks", "drawFavoriteOverlay", "(L"+renderItem+";L"+texMan+";L" + stack + ";II)V", false));
             	method.instructions.insertBefore(method.instructions.getLast().getPrevious(), list);
+            }
+            
+            if(isMethod(method,
+            		new String[] { "renderItemIntoGUI", "func_77015_a", "a" },
+            		new String[] {
+            				"(Lnet/minecraft/client/gui/FontRenderer;Lnet/minecraft/client/renderer/texture/TextureManager;Lnet/minecraft/item/ItemStack;IIZ)V",
+            				"(Lbbu;Lbqf;Ladd;IIZ)V"
+            			})) {
+                FavoriteMod.l.info("	transforming renderItemIntoGUI (actually " + method.name + method.desc + ")");
+                
+                InsnList list = new InsnList();
+                
+                list.add(new VarInsnNode(Opcodes.ALOAD, 3)); // stack
+                list.add(new VarInsnNode(Opcodes.ILOAD, 6)); // renderEffect
+                list.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "thecodewarrior/favorite/ASMHooks", "showEffect", "(L"+stack+";Z)Z", false));
+                list.add(new VarInsnNode(Opcodes.ISTORE, 6));
+                
+                method.instructions.insertBefore(method.instructions.getFirst(), list);
             }
         }
     	return true;

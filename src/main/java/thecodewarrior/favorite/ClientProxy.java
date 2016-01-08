@@ -10,26 +10,25 @@ import java.io.Writer;
 import java.util.HashSet;
 import java.util.Set;
 
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.multiplayer.PlayerControllerMP;
-import net.minecraft.client.renderer.OpenGlHelper;
-import net.minecraft.client.renderer.entity.RenderItem;
-import net.minecraft.client.settings.KeyBinding;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.inventory.Slot;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.IIcon;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.world.World;
-import net.minecraftforge.event.world.WorldEvent;
-
 import org.apache.commons.io.FileUtils;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.opengl.GL11;
 
 import cpw.mods.fml.client.registry.ClientRegistry;
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
-import cpw.mods.fml.common.gameevent.PlayerEvent.PlayerLoggedInEvent;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.PlayerControllerMP;
+import net.minecraft.client.renderer.OpenGlHelper;
+import net.minecraft.client.renderer.Tessellator;
+import net.minecraft.client.renderer.entity.RenderItem;
+import net.minecraft.client.renderer.texture.TextureManager;
+import net.minecraft.client.settings.KeyBinding;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.inventory.Slot;
+import net.minecraft.item.ItemStack;
+import net.minecraft.util.IIcon;
+import net.minecraft.util.ResourceLocation;
+import net.minecraftforge.event.world.WorldEvent;
 
 public class ClientProxy extends CommonProxy {
 	
@@ -57,51 +56,59 @@ public class ClientProxy extends CommonProxy {
 		public int getIconHeight() { return 1; }
 	};
 	
-	public void drawFavoriteUnderlay(RenderItem renderItem, ItemStack stack, int x, int y) {
-		if(!ASMHooks.isFavorite(stack))
-			return;
-		float zLevel = renderItem.zLevel + 50.0F;
-		GL11.glDisable(GL11.GL_LIGHTING);
-        GL11.glEnable(GL11.GL_BLEND);
-
-        OpenGlHelper.glBlendFunc(770, 771, 1, 0);
-        mc.renderEngine.bindTexture(underlay);
-        
-        GL11.glColor4f(1, 1, 1, 1.0F);
-
-        GL11.glDisable(GL11.GL_LIGHTING); //Forge: Make sure that render states are reset, a renderEffect can derp them up.
-        GL11.glEnable(GL11.GL_ALPHA_TEST);
-        GL11.glEnable(GL11.GL_BLEND);
-        // x, y, icon, w, h
-        renderItem.renderIcon(x, y, fullIIcon, 16, 16);
-
-        GL11.glEnable(GL11.GL_LIGHTING);
-        GL11.glDisable(GL11.GL_ALPHA_TEST);
-        GL11.glDisable(GL11.GL_BLEND);
+	public void drawFavoriteUnderlay(RenderItem renderItem, TextureManager manager, ItemStack stack, int x, int y) {
 	}
 	
-	public void drawFavoriteOverlay(RenderItem renderItem, ItemStack stack, int x, int y) {
+    private static final ResourceLocation RES_ITEM_GLINT = new ResourceLocation("textures/misc/enchanted_item_glint.png");
+	
+	public void drawFavoriteOverlay(RenderItem renderItem, TextureManager manager, ItemStack stack, int x, int y) {
 		if(!ASMHooks.isFavorite(stack))
 			return;
-		float zLevel = renderItem.zLevel + 50.0F;
-		GL11.glDisable(GL11.GL_LIGHTING);
+		float zLevel = renderItem.zLevel;
+		
+		GL11.glDepthFunc(GL11.GL_GEQUAL);
         GL11.glEnable(GL11.GL_BLEND);
-        GL11.glDisable(GL11.GL_DEPTH_TEST);
-        OpenGlHelper.glBlendFunc(770, 771, 1, 0);
-        mc.renderEngine.bindTexture(overlay);
         
-        GL11.glColor4f(1, 1, 1, 1.0F);
-
-        GL11.glDisable(GL11.GL_LIGHTING); //Forge: Make sure that render states are reset, a renderEffect can derp them up.
-        GL11.glEnable(GL11.GL_ALPHA_TEST);
-        GL11.glEnable(GL11.GL_BLEND);
-        // x, y, icon, w, h
-        renderItem.renderIcon(x, y, fullIIcon, 16, 16);
-        GL11.glEnable(GL11.GL_DEPTH_TEST);
-
-        GL11.glEnable(GL11.GL_LIGHTING);
-        GL11.glDisable(GL11.GL_ALPHA_TEST);
+        manager.bindTexture(RES_ITEM_GLINT);
+        GL11.glColor4f(0.1f, 0.3f, 0.1f, 1.0f);
+        renderGlint(0, x - 2, y - 2, 20, 20, (float)( renderItem.zLevel+25 )); // the +25 is to get it (hopefully) high enough to 
+        
         GL11.glDisable(GL11.GL_BLEND);
+        GL11.glDepthFunc(GL11.GL_LEQUAL);
+        
+//        renderItem.zLevel = zLevel;
+	}
+	
+	public void renderGlint(int p_77018_1_, int p_77018_2_, int p_77018_3_, int p_77018_4_, int p_77018_5_, float zLevel) {
+		for (int j1 = 0; j1 < 1; ++j1)
+        {
+            OpenGlHelper.glBlendFunc(772, 1, 0, 0);
+            float f = 0.00390625F;
+            float f1 = 0.00390625F;
+            float f2 = 256 - (   (float)(Minecraft.getSystemTime() % (long)(3000 + j1 * 1873)) / (3000.0F + (float)(j1 * 1873)) * 256.0F   );
+            float f3 = 0.0F;
+            Tessellator tessellator = Tessellator.instance;
+            float f4 = 4.0F;
+
+            if (j1 == 1)
+            {
+                f4 = -1.0F;
+            }
+
+            int p_77018_5____ = p_77018_5_;
+            int asdf = 12;
+            
+            tessellator.startDrawingQuads();
+            tessellator.addVertexWithUV((double)(p_77018_2_ + 0),			(double)(p_77018_3_ + p_77018_5_),	(double)zLevel, (double)((f2 + 0.0F) * f),						(double)((f3 + (float)p_77018_5_) * f1));
+            tessellator.addVertexWithUV((double)(p_77018_2_ + p_77018_4_),	(double)(p_77018_3_ + p_77018_5_),	(double)zLevel, (double)((f2 + (float)p_77018_4_) * f),	(double)((f3 + (float)p_77018_5_) * f1));
+            tessellator.addVertexWithUV((double)(p_77018_2_ + p_77018_4_),	(double)(p_77018_3_ + 0),			(double)zLevel, (double)((f2 + (float)p_77018_4_ + (float)p_77018_5____ * f4) * f),								(double)((f3 + 0.0F) * f1));
+            tessellator.addVertexWithUV((double)(p_77018_2_ + 0),			(double)(p_77018_3_ + 0),			(double)zLevel, (double)((f2 + (float)p_77018_5____ * f4) * f), 											(double)((f3 + 0.0F) * f1));
+            tessellator.draw();
+        }
+	}
+	
+	public Set<String> getFavoriteSet() {
+		return favorites;
 	}
 	
 	public void toggleFavorite(int slotId) {
@@ -117,22 +124,29 @@ public class ClientProxy extends CommonProxy {
 	
 	public void setFavorite(ItemStack stack, boolean favorite) {
 		if(stack != null) {
-			reloadFavoritesFile();
-			if(favorite) {
-				favorites.add(stack.getDisplayName());
-			} else {
-				favorites.remove(stack.getDisplayName());
-			}
-			saveFavoriteFile();
+			setFavorite(stack.getDisplayName(), favorite);
 		}
+	}
+	
+	public void setFavorite(String entry, boolean favorite) {
+		reloadFavoritesFile();
+		if(favorite) {
+			favorites.add(entry);
+		} else {
+			favorites.remove(entry);
+		}
+		saveFavoriteFile();
 	}
 	
 	public boolean isFavorite(ItemStack stack) {
 		if(stack == null)
 			return false;
-		String displayName = stack.getDisplayName();
-		for(String name : favorites) {
-			if(matches(name, displayName)) {
+		return isFavorite( stack.getDisplayName() );
+	}
+	
+	public boolean isFavorite(String name) {
+		for(String checkName : favorites) {
+			if(matches(checkName, name)) {
 				return true;
 			}
 		}

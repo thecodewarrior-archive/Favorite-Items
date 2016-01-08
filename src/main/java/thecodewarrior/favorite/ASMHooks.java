@@ -5,6 +5,7 @@ import java.util.List;
 import net.minecraft.client.entity.EntityClientPlayerMP;
 import net.minecraft.client.gui.inventory.GuiContainer;
 import net.minecraft.client.renderer.entity.RenderItem;
+import net.minecraft.client.renderer.texture.TextureManager;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.Container;
 import net.minecraft.inventory.Slot;
@@ -14,11 +15,18 @@ public class ASMHooks {
 	public static boolean overrideTrue = false;
 	public static boolean completeLock = false;
 	
-	public static void drawFavoriteUnderlay(RenderItem renderItem, ItemStack stack, int x, int y) {
-		((ClientProxy)FavoriteMod.proxy).drawFavoriteUnderlay(renderItem, stack, x, y);
+	public static void drawFavoriteUnderlay(RenderItem renderItem, TextureManager manager, ItemStack stack, int x, int y) {
+		((ClientProxy)FavoriteMod.proxy).drawFavoriteUnderlay(renderItem, manager, stack, x, y);
 	}
-	public static void drawFavoriteOverlay(RenderItem renderItem, ItemStack stack, int x, int y) {
-		((ClientProxy)FavoriteMod.proxy).drawFavoriteOverlay(renderItem, stack, x, y);
+	public static void drawFavoriteOverlay(RenderItem renderItem, TextureManager manager, ItemStack stack, int x, int y) {
+		((ClientProxy)FavoriteMod.proxy).drawFavoriteOverlay(renderItem, manager, stack, x, y);
+	}
+	public static boolean showEffect(ItemStack stack, boolean in) {
+		if(isFavorite(stack)) {
+			return false;
+		} else {
+			return in;
+		}
 	}
 	
 	public static boolean isFavorite(ItemStack stack) {
@@ -60,7 +68,11 @@ public class ASMHooks {
 	}
 	
 	public static boolean shouldAbortClick(int windowId, int slotId, int data, int action, EntityPlayer player) {
-		if(slotId < 0) {
+		if(slotId == -999 && action == actionOffset() + 5) {
+			return false;
+		}
+		
+		if(slotId == -999){// && action != actionOffset() + 5) {
 			if(isFavorite(player.inventory.getItemStack())) {
 				return true;
 			}
@@ -71,7 +83,9 @@ public class ASMHooks {
 		if(stack == null) {
 			return false;
 		}
-		if(action == actionOffset()) { // action will be 0+actionOffset() if it is a normal physical click, we don't want to abort those
+		if(action == actionOffset() || action == actionOffset()+2) {
+			// action will be 0+actionOffset() if it is a normal physical click, we don't want to abort those
+			// action will be 2+actionOffset() if it is a hotbar quick-move, we don't want to abort those
 			return false;
 		}
 		if(isFavorite(stack)) {

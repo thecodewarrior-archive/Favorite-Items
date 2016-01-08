@@ -19,7 +19,7 @@ import cpw.mods.fml.relauncher.Side;
 public class FavoriteMod {
 	public static final String MODID = "favorites";
 	public static final String MODNAME = "Favorites!";
-	public static final String VERSION = "1.0";
+	public static final String VERSION = "1.2.1";
 	public static final Logger l = LogManager.getLogger("Favorites");
 	
 	@SidedProxy(serverSide="thecodewarrior.favorite.CommonProxy", clientSide="thecodewarrior.favorite.ClientProxy")
